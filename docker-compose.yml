@@ -49,15 +49,17 @@ services:
     keycloak:
         container_name: keycloak
         image: quay.io/keycloak/keycloak:latest
+        command: -v start-dev --import-realm
         environment:
             KEYCLOAK_ADMIN: admin
             KEYCLOAK_ADMIN_PASSWORD: admin
             DB_VENDOR: H2
         ports:
             - "8080:8080"
-        entrypoint: ["/opt/keycloak/bin/kc.sh", "start-dev"]
         networks:
             - mynetwork
+        volumes:
+            - ./docker_config/keycloak.json:/opt/keycloak/data/import/keycloak.json
 
 networks:
     mynetwork:

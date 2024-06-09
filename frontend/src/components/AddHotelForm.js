@@ -8,11 +8,23 @@ const AddHotelForm = () => {
     const handleSubmit = (event) => {
         event.preventDefault();
 
+        const token = localStorage.getItem("token");
+        const refreshToken = localStorage.getItem("refreshToken");
+
         axios
-            .post("http://localhost:5000/hotels", {
-                name: name,
-                location: location,
-            })
+            .post(
+                "http://localhost:5000/hotels",
+                {
+                    name: name,
+                    location: location,
+                },
+                {
+                    headers: {
+                        Authorization: "Bearer " + token,
+                        refresh_token: refreshToken,
+                    },
+                }
+            )
             .then((response) => {
                 console.log("Hotel added successfully");
                 setName("");

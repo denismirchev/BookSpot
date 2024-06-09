@@ -6,7 +6,7 @@ import Keycloak from "keycloak-js";
 
 let initOptions = {
     url: "http://localhost:8080/",
-    realm: "master",
+    realm: "vot",
     clientId: "app-client",
 };
 
@@ -22,8 +22,8 @@ kc.init({
         console.log("kc", kc);
         console.log("token", kc.token);
 
-        // httpClient.defaults.headers.common["Authorization"] =
-        // "Bearer " + kc.token;
+        localStorage.setItem("token", kc.token);
+        localStorage.setItem("refreshToken", kc.refreshToken);
 
         kc.onTokenExpired = () => {
             console.log("token expired");

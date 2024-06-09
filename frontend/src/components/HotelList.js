@@ -5,8 +5,15 @@ const HotelList = () => {
     const [hotels, setHotels] = useState([]);
 
     useEffect(() => {
+        const token = localStorage.getItem("token");
+        const refreshToken = localStorage.getItem("refreshToken");
         axios
-            .get("http://localhost:5000/hotels")
+            .get("http://localhost:5000/hotels", {
+                headers: {
+                    Authorization: "Bearer " + token,
+                    refresh_token: refreshToken,
+                },
+            })
             .then((response) => {
                 setHotels(response.data);
             })
