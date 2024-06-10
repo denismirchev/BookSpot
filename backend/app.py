@@ -3,23 +3,27 @@ from flask_cors import CORS
 import mysql.connector
 from keycloak import KeycloakOpenID, KeycloakGetError
 from functools import wraps
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 db_config = {
-    'user': 'maxscale_user',
-    'password': '12345678',
-    'host': 'localhost',
-    'port': 4006,
-    'database': 'hotels'
+    'user': os.getenv('DB_USER', 'maxscale_user'),
+    'password': os.getenv('DB_PASSWORD', '12345678'),
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'port': os.getenv('DB_PORT', '4006'),
+    'database': os.getenv('DB_NAME', 'hotels')
 }
 
 keycloak_openid = KeycloakOpenID(
-    server_url="http://localhost:8080/",
-    client_id="app-client",
-    realm_name="vot",
+    server_url=os.getenv('KEYCLOAK_SERVER_URL', "http://localhost:8080/"),
+    client_id=os.getenv('KEYCLOAK_CLIENT_ID', "app-client"),
+    realm_name=os.getenv('KEYCLOAK_REALM_NAME', "vot"),
 )
+
+print(keycloak_openid)
+print(keycloak_openid.well_known())
 
 
 def get_db_connection():
@@ -32,11 +36,11 @@ def token_required(f):
         if 'Authorization' not in request.headers:
             return jsonify({'message': 'Token is missing!'}), 401
         token = request.headers['Authorization'].split()[1]
+        print(token)
         try:
             keycloak_openid.userinfo(token)
         except KeycloakGetError as e:
             if e.response_code == 401:
-                # Token is expired, attempt to refresh
                 if 'refresh_token' in request.headers:
                     refresh_token = request.headers['refresh_token']
                     try:
@@ -86,5 +90,11 @@ def add_hotel():
     return jsonify({'message': 'Hotel added successfully!'}), 201
 
 
+@app.route('/', methods=['GET'])
+def home():
+    print(keycloak_openid)
+    return jsonify({'message': 'Hello World!'}), 200
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.getenv('FLASK_ENV') == 'development')

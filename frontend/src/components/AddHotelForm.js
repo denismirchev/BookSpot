@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const AddHotelForm = () => {
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+
     const [name, setName] = useState("");
     const [location, setLocation] = useState("");
 
@@ -13,7 +15,7 @@ const AddHotelForm = () => {
 
         axios
             .post(
-                "http://localhost:5000/hotels",
+                `${backendUrl}/hotels`,
                 {
                     name: name,
                     location: location,

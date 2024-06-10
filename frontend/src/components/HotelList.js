@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 const HotelList = () => {
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+
     const [hotels, setHotels] = useState([]);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
         const refreshToken = localStorage.getItem("refreshToken");
         axios
-            .get("http://localhost:5000/hotels", {
+            .get(`${backendUrl}/hotels`, {
                 headers: {
                     Authorization: "Bearer " + token,
                     refresh_token: refreshToken,

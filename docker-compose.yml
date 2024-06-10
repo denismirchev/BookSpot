@@ -11,7 +11,7 @@ services:
         ports:
             - "3307:3306"
         networks:
-            - mynetwork
+            - mariadb_network
         volumes:
             - ./docker_config/galera_cluster1.cnf:/etc/mysql/mariadb.conf.d/60-galera.cnf
             - ./docker_config/init-mariadb.sql:/docker-entrypoint-initdb.d/init.sql
@@ -26,7 +26,7 @@ services:
         ports:
             - "3308:3306"
         networks:
-            - mynetwork
+            - mariadb_network
         volumes:
             - ./docker_config/galera_cluster2.cnf:/etc/mysql/mariadb.conf.d/60-galera.cnf
             - ./docker_config/init-mariadb.sql:/docker-entrypoint-initdb.d/init.sql
@@ -41,10 +41,10 @@ services:
         depends_on:
             - mariadb1
             - mariadb2
+        networks:
+            - mariadb_network
         volumes:
             - ./maxscale.cnf:/etc/maxscale.cnf
-        networks:
-            - mynetwork
 
     keycloak:
         container_name: keycloak
@@ -54,17 +54,69 @@ services:
             KEYCLOAK_ADMIN: admin
             KEYCLOAK_ADMIN_PASSWORD: admin
             DB_VENDOR: H2
+            KC_HTTP_ENABLED: true
         ports:
             - "8080:8080"
-        networks:
-            - mynetwork
+        network_mode: host
         volumes:
             - ./docker_config/keycloak.json:/opt/keycloak/data/import/keycloak.json
 
-networks:
-    mynetwork:
-        driver: bridge
+    backend-dev:
+        container_name: backend-dev
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.dev
+        environment:
+            FLASK_ENV: development
+        ports:
+            - "5000:5000"
+        network_mode: host
+        depends_on:
+            - maxscale
+            - keycloak
 
-volumes:
-    mariadb1_data:
-    mariadb2_data:
+    backend-prod:
+        container_name: backend-prod
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.prod
+        environment:
+            FLASK_ENV: production
+        ports:
+            - "5001:5000"
+        network_mode: host
+        depends_on:
+            - maxscale
+            - keycloak
+
+    frontend-dev:
+        container_name: frontend-dev
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile.dev
+        environment:
+            NODE_ENV: development
+            REACT_APP_BACKEND_URL: http://localhost:5000
+        ports:
+            - "3000:3000"
+        network_mode: host
+        depends_on:
+            - backend-dev
+
+    frontend-prod:
+        container_name: frontend-prod
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile.prod
+        environment:
+            NODE_ENV: production
+            REACT_APP_BACKEND_URL: http://localhost:5001/api
+        ports:
+            - "3001:3001"
+        network_mode: host
+        depends_on:
+            - backend-prod
+
+networks:
+    mariadb_network:
+        driver: bridge
